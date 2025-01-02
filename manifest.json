@@ -4,21 +4,22 @@
     "version": "1.0.0",
     "description": "Save Time and Utilize it for self-development",
     "icons": {
-        "16": "icons/2.png",
-        "32": "icons/2.png",
-        "48": "icons/2.png",
-        "128": "icons/2.png"
+        "24": "icons/24.png",
+        "48": "icons/48.png"
     },
     "action": {
         "default_popup": "popup.html",
         "default_icon": {
-            "16": "icons/2.png",
-            "32": "icons/2.png",
-            "48": "icons/2.png",
-            "128": "icons/2.png"
+            "24": "icons/24.png",
+            "48": "icons/48.png"
         }
     },
-    "permissions": ["storage","contextMenus","alarms","notifications"],
+    "permissions": [
+        "storage",
+        "contextMenus",
+        "alarms",
+        "notifications"
+    ],
     "background": {
         "service_worker": "service_worker.js"
     }

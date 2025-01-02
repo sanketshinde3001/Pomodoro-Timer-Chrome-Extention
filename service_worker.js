@@ -51,7 +51,7 @@ function updateBadge() {
 function createNotification() {
   chrome.notifications.create({
     type: 'basic',
-    iconUrl: 'icons/48.png',
+    iconUrl: '24.png',
     title: 'Pomodoro Timer',
     message: "Time's up! Take a break.",
     priority: 2,
