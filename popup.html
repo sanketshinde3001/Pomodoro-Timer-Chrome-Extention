@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    :root {
+      /* Light theme variables */
+      --light-bg: #e0e5ec;
+      --light-text: #2d4059;
+      --light-shadow-1: #ffffff;
+      --light-shadow-2: #a3b1c6;
+      --light-primary: #4a90e2;
+      --light-secondary: #d1d9e6;
+      
+      /* Dark theme variables */
+      --dark-bg: #1a1f24;
+      --dark-text: #e0e5ec;
+      --dark-shadow-1: #23282d;
+      --dark-shadow-2: #15191c;
+      --dark-primary: #4a90e2;
+      --dark-secondary: #2d333a;
+    }
+
+    body {
+      width: 300px;
+      padding: 20px;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--light-bg);
+      color: var(--light-text);
+      transition: all 0.3s ease;
+    }
+
+    body.dark-theme {
+      background-color: var(--dark-bg);
+      color: var(--dark-text);
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .timer-display {
+      font-size: 48px;
+      text-align: center;
+      margin: 20px 0;
+      font-weight: 600;
+      padding: 20px;
+      border-radius: 20px;
+      background: var(--light-bg);
+      box-shadow: 8px 8px 16px var(--light-shadow-2),
+                  -8px -8px 16px var(--light-shadow-1);
+    }
+
+    .dark-theme .timer-display {
+      background: var(--dark-bg);
+      box-shadow: 8px 8px 16px var(--dark-shadow-2),
+                  -8px -8px 16px var(--dark-shadow-1);
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      padding: 12px 24px;
+    }
+
+    .primary {
+      background: var(--light-bg);
+      color: var(--light-primary);
+      box-shadow: 6px 6px 12px var(--light-shadow-2),
+                  -6px -6px 12px var(--light-shadow-1);
+    }
+
+    .dark-theme .primary {
+      background: var(--dark-bg);
+      color: var(--dark-primary);
+      box-shadow: 6px 6px 12px var(--dark-shadow-2),
+                  -6px -6px 12px var(--dark-shadow-1);
+    }
+
+    .primary:active, .secondary:active, .preset-btn:active {
+      box-shadow: inset 4px 4px 8px var(--light-shadow-2),
+                  inset -4px -4px 8px var(--light-shadow-1);
+    }
+
+    .dark-theme .primary:active,
+    .dark-theme .secondary:active,
+    .dark-theme .preset-btn:active {
+      box-shadow: inset 4px 4px 8px var(--dark-shadow-2),
+                  inset -4px -4px 8px var(--dark-shadow-1);
+    }
+
+    .secondary {
+      background: var(--light-bg);
+      color: var(--light-text);
+      box-shadow: 6px 6px 12px var(--light-shadow-2),
+                  -6px -6px 12px var(--light-shadow-1);
+    }
+
+    .dark-theme .secondary {
+      background: var(--dark-bg);
+      color: var(--dark-text);
+      box-shadow: 6px 6px 12px var(--dark-shadow-2),
+                  -6px -6px 12px var(--dark-shadow-1);
+    }
+
+    .preset-times {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .preset-btn {
+      padding: 10px;
+      background: var(--light-bg);
+      color: var(--light-text);
+      border-radius: 10px;
+      box-shadow: 4px 4px 8px var(--light-shadow-2),
+                  -4px -4px 8px var(--light-shadow-1);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .dark-theme .preset-btn {
+      background: var(--dark-bg);
+      color: var(--dark-text);
+      box-shadow: 4px 4px 8px var(--dark-shadow-2),
+                  -4px -4px 8px var(--dark-shadow-1);
+    }
+
+    .settings {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 12px;
+      background: var(--light-bg);
+      box-shadow: inset 4px 4px 8px var(--light-shadow-2),
+                  inset -4px -4px 8px var(--light-shadow-1);
+    }
+
+    .dark-theme .settings {
+      background: var(--dark-bg);
+      box-shadow: inset 4px 4px 8px var(--dark-shadow-2),
+                  inset -4px -4px 8px var(--dark-shadow-1);
+    }
+
+    .theme-switch {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    /* Custom checkbox styles */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--light-secondary);
+      transition: .4s;
+      border-radius: 24px;
+      box-shadow: inset 2px 2px 4px var(--light-shadow-2),
+                  inset -2px -2px 4px var(--light-shadow-1);
+    }
+
+    .dark-theme .slider {
+      background-color: var(--dark-secondary);
+      box-shadow: inset 2px 2px 4px var(--dark-shadow-2),
+                  inset -2px -2px 4px var(--dark-shadow-1);
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: var(--light-shadow-1);
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    .dark-theme .slider:before {
+      background-color: var(--dark-primary);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="timer-display" id="timer">25:00</div>
+
+    <div class="controls">
+      <button id="startBtn" class="primary">Start</button>
+      <button id="resetBtn" class="secondary">Reset</button>
+    </div>
+
+    <div class="preset-times">
+      <button class="preset-btn" data-time="300">5m</button>
+      <button class="preset-btn" data-time="600">10m</button>
+      <button class="preset-btn" data-time="900">15m</button>
+      <button class="preset-btn" data-time="1200">20m</button>
+      <button class="preset-btn" data-time="1500">25m</button>
+      <button class="preset-btn" data-time="1800">30m</button>
+    </div>
+
+    <div class="settings">
+      <div class="theme-switch">
+        <label class="switch">
+          <input type="checkbox" id="themeToggle">
+          <span class="slider"></span>
+        </label>
+        <span>Dark Mode</span>
+      </div>
+      <label>
+        <input type="checkbox" id="soundEnabled" checked>
+        Enable sound
+      </label>
+    </div>
+  </div>
+
+<script src="popup.js"></script>
+</body>
+</html>

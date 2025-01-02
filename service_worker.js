@@ -1,111 +1,110 @@
-let seconds = 1 * 60;
-let timerIsRunning = false;
+const TIMER_NAME = 'Pomodoro Timer';
+const DEFAULT_DURATION = 1500; // 25 minutes
 
-function createAlarm(name) {
-  chrome.alarms.create(name, {
+let timerState = {
+  seconds: DEFAULT_DURATION,
+  isRunning: false,
+};
+
+// Initialize state from storage
+chrome.storage.local.get(['timerState'], (result) => {
+  timerState = result.timerState || { seconds: DEFAULT_DURATION, isRunning: false };
+  updateBadge();
+});
+
+// Startup and Install Event - Refresh Badge
+chrome.runtime.onStartup.addListener(() => {
+  updateBadge();
+});
+
+chrome.runtime.onInstalled.addListener(() => {
+  updateBadge();
+});
+
+// Create Pomodoro Alarm
+function createAlarm() {
+  chrome.alarms.create(TIMER_NAME, {
     periodInMinutes: 1 / 60,
   });
 }
 
-function clearAlarm(name) {
-  chrome.alarms.clear(name, (wasCleared) => {
-    console.log(wasCleared);
-  });
+// Clear Pomodoro Alarm
+function clearAlarm() {
+  chrome.alarms.clear(TIMER_NAME);
 }
 
-chrome.contextMenus.create({
-  id: "start_timer",
-  title: "Start Timer",
-  contexts: ["all"],
-});
+// Update Badge with Timer State
+function updateBadge() {
+  const minutes = Math.floor(timerState.seconds / 60);
+  const seconds = timerState.seconds % 60;
+  const text = `${minutes}:${String(seconds).padStart(2, '0')}`;
 
-chrome.contextMenus.create({
-  id: "reset_timer",
-  title: "Reset Timer",
-  contexts: ["all"],
-});
+  let color = 'green';
+  if (timerState.seconds <= 300) color = 'red';
+  else if (timerState.seconds <= 900) color = 'orange';
 
-function createNotification(message) {
-  const opt = {
-    type: "list",
-    title: "Pomodoro Timer",
-    message,
-    items: [{ title: "Pomodoro Timer", message: message }],
-    iconUrl: "icons/48.png",
-  };
-  chrome.notifications.create(opt);
-}
-
-chrome.alarms.onAlarm.addListener((alarm) => {
-  seconds--;
-
-  let minutesremaining = Math.floor(seconds / 60) + " M";
-
-  if (seconds < 600) {
-    minutesremaining = Math.floor(seconds / 60) + " : " + Math.floor(seconds % 60).toString().padStart(2, "0");
-  }
-
-  let color = "green";
-  if (seconds <= 300) {
-    color = "red";
-  } else if (seconds <= 900) {
-    color = "orange";
-  }
-
+  chrome.action.setBadgeText({ text });
   chrome.action.setBadgeBackgroundColor({ color });
+}
 
-  chrome.action.setBadgeText({
-    text: minutesremaining,
+// Create Notification When Timer Ends
+function createNotification() {
+  chrome.notifications.create({
+    type: 'basic',
+    iconUrl: 'icons/48.png',
+    title: 'Pomodoro Timer',
+    message: "Time's up! Take a break.",
+    priority: 2,
+    silent: false,
   });
-  console.log(seconds);
-  if (seconds <= 0) {
-    timerIsRunning = false;
-    createNotification("Time's up!");
-    clearAlarm("Pomodoro Timer");
-    chrome.contextMenus.update("start_timer", {
-      title: "Start Timer",
-      contexts: ["all"],
-    });
-    chrome.action.setBadgeText({
-      text: "--",
-    });
+}
+
+// Alarm Listener - Decrement Timer
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name !== TIMER_NAME) return;
+
+  timerState.seconds--;
+  updateBadge();
+
+  // Broadcast update to popup if open
+  chrome.runtime.sendMessage({
+    type: 'timerUpdate',
+    seconds: timerState.seconds,
+  }).catch(() => {
+    // Suppress No SW Error if no receiver exists
+  });
+
+  // When time reaches zero
+  if (timerState.seconds <= 0) {
+    timerState.isRunning = false;
+    clearAlarm();
+    createNotification();
+    chrome.storage.local.set({ timerState });
   }
 });
 
-
-chrome.contextMenus.onClicked.addListener((info, tab) => {
-  switch (info.menuItemId) {
-    case "start_timer":
-      if (timerIsRunning) {
-        clearAlarm("Pomodoro Timer");
-        chrome.action.setBadgeText({
-          text: "▶",
-        });
-        chrome.contextMenus.update("start_timer", { title: "Start Timer" });
-        timerIsRunning = false;
-        createNotification("Timer stopped");
-      } else {
-        timerIsRunning = true;
-        chrome.contextMenus.update("start_timer", { title: "Stop Timer" });
-        createAlarm("Pomodoro Timer");
-        createNotification("Timer started");
-      }
+// Listen for Popup Commands (Start, Pause, Reset)
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  switch (message.command) {
+    case 'startTimer':
+      timerState.seconds = message.seconds || timerState.seconds;
+      timerState.isRunning = true;
+      createAlarm();
       break;
 
-    case "reset_timer":
-      seconds = 25*60;
-      timerIsRunning = false;
-      chrome.action.setBadgeText({
-        text: "—",
-      });
-      chrome.action.setBadgeBackgroundColor({color:"green" });
-      chrome.contextMenus.update("start_timer", { title: "Start Timer" });
-      clearAlarm("Pomodoro Timer");
-      createNotification("Timer reset");
+    case 'pauseTimer':
+      timerState.isRunning = false;
+      clearAlarm();
       break;
 
-    default:
+    case 'resetTimer':
+      timerState.seconds = message.seconds || DEFAULT_DURATION;
+      timerState.isRunning = false;
+      clearAlarm();
+      updateBadge();
       break;
   }
-});
 
+  chrome.storage.local.set({ timerState });
+  sendResponse({ success: true });
+});
